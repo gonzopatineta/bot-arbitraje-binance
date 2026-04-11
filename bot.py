@@ -24,15 +24,15 @@ UMBRAL_REINVERSION = 50
 
 # ── Modos de operacion ────────────────────────────────────────────────────────
 # AGRESIVO:   funding > 500% anual  → entra sin filtro tecnico, capital completo
-# MODERADO:   funding 50-500% anual → requiere RSI + EMA favorables, capital al 50%
+# MODERADO:   funding 50-300% anual → requiere RSI + EMA favorables, capital al 50%
 # SIN OPCION: funding < 50% anual   → no opera
 
-UMBRAL_AGRESIVO  = 500
+UMBRAL_AGRESIVO  = 300
 UMBRAL_MODERADO  = 50
 CAPITAL_MODERADO = 0.5
 
 # Parametros analisis tecnico (modo moderado)
-RSI_MINIMO  = 55
+RSI_MINIMO  = 45
 EMA_PERIODO = 20
 
 EXCLUIR = ['SLERFUSDT', 'JELLYJELLY', 'NEIROCTOUSUSDT']
@@ -164,7 +164,7 @@ def firmar(params):
     timestamp = int(time.time() * 1000)
     query = params + f"&timestamp={timestamp}"
     signature = hmac.new(
-        API_SECRET.encode(),
+            API_SECRET.encode(),
         query.encode(),
         hashlib.sha256
     ).hexdigest()
