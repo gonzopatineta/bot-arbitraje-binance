@@ -36,6 +36,7 @@ RSI_MINIMO  = 45
 EMA_PERIODO = 20
 
 EXCLUIR = ['SLERFUSDT', 'JELLYJELLY', 'NEIROCTOUSUSDT']
+STEP_SIZES_CACHE = {}  # Cache de stepSizes para no llamar exchangeInfo en cada operacion
 ESTADO_FILE = '/root/bot_arbitraje/estado.json'
 
 # ── Estado persistente ────────────────────────────────────────────────────────
@@ -247,6 +248,29 @@ def get_mejor_oportunidad():
         fecha = time.strftime('%Y-%m-%d %H:%M:%S')
         registrar(fecha, "-", "-", "ERROR FUNDING", "-", str(e))
         return []
+
+
+def cargar_step_sizes():
+    """
+    Carga el stepSize de todos los simbolos de futuros en memoria.
+    Se llama UNA sola vez al iniciar el bot.
+    """
+    global STEP_SIZES_CACHE
+    try:
+        url = f"{BASE_URL}/fapi/v1/exchangeInfo"
+        response = requests.get(url, timeout=15)
+        data = response.json()
+        count = 0
+        for s in data.get('symbols', []):
+            simbolo = s['symbol']
+            for f in s.get('filters', []):
+                if f['filterType'] == 'LOT_SIZE':
+                    STEP_SIZES_CACHE[simbolo] = float(f['stepSize'])
+                    count += 1
+                    break
+        print(f"[Cache] {count} stepSizes cargados en memoria")
+    except Exception as e:
+        print(f"Error cargando step sizes: {e}")
 
 def get_step_size(simbolo):
     """
@@ -484,6 +508,9 @@ print("=== BOT ARBITRAJE FUNDING RATE - DEMO ===")
 print(f"Stop loss: {STOP_LOSS_PCT}% (nativo Binance) | Volatilidad max: {MAX_VOLATILIDAD}% | Volumen min: {VOLUMEN_MINIMO} USDT")
 print(f"Interes compuesto: umbral {UMBRAL_REINVERSION} USDT | techo {CAPITAL_MAXIMO} USDT")
 print(f"Modos: Agresivo >={UMBRAL_AGRESIVO}% | Moderado {UMBRAL_MODERADO}-{UMBRAL_AGRESIVO}% (RSI+EMA)\n")
+
+# Cargar step sizes en memoria (una sola vez)
+cargar_step_sizes()
 
 estado = cargar_estado()
 balance_actual_inicio = get_balance()
